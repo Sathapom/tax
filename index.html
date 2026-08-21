@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สมุดบัญชีรายรับ · เตรียมภาษีบุคคลธรรมดา</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: #101820;
+    --ink-soft: #2a3542;
+    --paper: #F4EFE3;
+    --paper-line: #DED4B9;
+    --gold: #C89B3C;
+    --gold-deep: #9C7423;
+    --mint: #7FB8A4;
+    --red: #B5563C;
+    --shadow: 0 12px 30px rgba(16,24,32,.18);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'IBM Plex Sans Thai', sans-serif;
+    background: var(--ink);
+    color: var(--paper);
+    min-height:100vh;
+  }
+  .mono{ font-family:'IBM Plex Mono', monospace; }
+  .display{ font-family:'Fraunces', serif; }
+
+  header.cover{
+    padding: 48px 20px 64px;
+    text-align:center;
+    background:
+      radial-gradient(ellipse at top, rgba(200,155,60,.10), transparent 60%),
+      linear-gradient(180deg, #101820 0%, #0C1319 100%);
+    border-bottom: 1px solid rgba(200,155,60,.25);
+    position:relative;
+  }
+  header.cover .eyebrow{
+    letter-spacing:.22em; text-transform:uppercase; font-size:11px;
+    color: var(--gold); margin-bottom:14px; opacity:.85;
+  }
+  header.cover h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: clamp(28px, 5vw, 44px);
+    margin: 0 0 10px;
+    letter-spacing: -.01em;
+  }
+  header.cover p{
+    color:#B7C0C8; max-width:520px; margin:0 auto; font-size:14.5px; line-height:1.7;
+  }
+
+  .wrap{ max-width: 880px; margin: -40px auto 60px; padding: 0 16px; }
+
+  .page{
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    padding: 30px 26px;
+    margin-bottom: 22px;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0px, transparent 37px,
+      rgba(16,24,32,.05) 38px
+    );
+  }
+
+  .section-title{
+    display:flex; align-items:baseline; gap:10px; margin-bottom:18px;
+  }
+  .section-title .num{
+    font-family:'Fraunces', serif; font-weight:600; font-size:13px;
+    color: var(--gold-deep); border:1px solid var(--gold-deep);
+    border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .section-title h2{
+    font-family:'Fraunces', serif; font-size:19px; font-weight:600; margin:0;
+  }
+
+  form.entry-form{
+    display:grid; grid-template-columns: repeat(6, 1fr); gap:12px 12px;
+  }
+  form.entry-form .f-date{ grid-column: span 2; }
+  form.entry-form .f-cat{ grid-column: span 4; }
+  form.entry-form .f-desc{ grid-column: span 6; }
+  form.entry-form .f-amount{ grid-column: span 3; }
+  form.entry-form .f-wht{ grid-column: span 3; }
+  form.entry-form .f-note{ grid-column: span 6; }
+  form.entry-form .f-submit{ grid-column: span 6; text-align:right; margin-top:4px; }
+
+  @media (max-width:560px){
+    form.entry-form .f-date, form.entry-form .f-cat, form.entry-form .f-amount, form.entry-form .f-wht{ grid-column: span 6; }
+  }
+
+  label{ display:block; font-size:11.5px; color:var(--ink-soft); margin-bottom:5px; letter-spacing:.03em; }
+  input, select, textarea{
+    width:100%; font-family:'IBM Plex Sans Thai', sans-serif; font-size:14px;
+    padding:9px 10px; border:1px solid var(--paper-line); border-radius:3px;
+    background:#fffdf8; color:var(--ink);
+  }
+  input:focus, select:focus, textarea:focus{ outline:2px solid var(--gold); outline-offset:1px; }
+  input.mono-in{ font-family:'IBM Plex Mono', monospace; }
+
+  button{
+    font-family:'IBM Plex Sans Thai', sans-serif; font-weight:600; font-size:13.5px;
+    cursor:pointer; border:none; border-radius:3px; padding:11px 20px;
+    background: var(--ink); color:var(--paper);
+    transition: transform .12s ease;
+  }
+  button:hover{ transform: translateY(-1px); }
+  button.gold{ background: var(--gold); color:#221a06; }
+  button.ghost{ background:transparent; color:var(--ink-soft); border:1px solid var(--paper-line); padding:6px 12px; font-size:12px; }
+  button.danger{ background:transparent; color:var(--red); border:1px solid var(--red); padding:5px 10px; font-size:11.5px; }
+
+  /* ledger table */
+  table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  thead th{
+    text-align:left; font-size:11px; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--ink-soft); border-bottom:1.5px solid var(--ink); padding:0 8px 8px;
+  }
+  tbody td{ padding:10px 8px; border-bottom:1px dashed var(--paper-line); vertical-align:top; }
+  tbody tr:last-child td{ border-bottom:none; }
+  td.num, th.num{ text-align:right; font-family:'IBM Plex Mono', monospace; }
+  .cat-pill{
+    display:inline-block; font-size:11px; padding:2px 8px; border-radius:20px;
+    background: rgba(16,24,32,.08); color:var(--ink-soft); font-family:'IBM Plex Mono', monospace;
+  }
+  .empty-note{ text-align:center; padding: 30px 10px; color:var(--ink-soft); font-size:13.5px; }
+
+  /* stamp / summary */
+  .stamp-row{ display:flex; gap:20px; flex-wrap:wrap; align-items:center; }
+  .stamp{
+    width:132px; height:132px; border-radius:50%;
+    border:3px solid var(--red); color:var(--red);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    transform: rotate(-8deg);
+    font-family:'Fraunces', serif;
+    flex-shrink:0;
+    position:relative;
+  }
+  .stamp::before{
+    content:''; position:absolute; inset:6px; border:1px solid var(--red); border-radius:50%; opacity:.5;
+  }
+  .stamp .rate{ font-size:30px; font-weight:700; line-height:1; }
+  .stamp .lbl{ font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; margin-top:4px; }
+
+  .stat-grid{ display:grid; grid-template-columns: repeat(2,1fr); gap:14px; flex:1; min-width:260px; }
+  .stat{ border-left:2px solid var(--gold-deep); padding-left:10px; }
+  .stat .k{ font-size:11px; color:var(--ink-soft); letter-spacing:.03em; }
+  .stat .v{ font-family:'IBM Plex Mono', monospace; font-size:18px; font-weight:600; margin-top:2px; }
+  .stat .v.pos{ color:#2E6B4F; }
+  .stat .v.neg{ color:var(--red); }
+
+  .cat-breakdown{ margin-top:20px; }
+  .cat-row{ display:flex; align-items:center; gap:10px; font-size:13px; margin-bottom:8px; }
+  .cat-row .bar-bg{ flex:1; height:7px; background:rgba(16,24,32,.08); border-radius:4px; overflow:hidden; }
+  .cat-row .bar{ height:100%; background: var(--gold); }
+  .cat-row .amt{ font-family:'IBM Plex Mono', monospace; width:110px; text-align:right; }
+
+  details.settings{ font-size:13px; }
+  details.settings summary{ cursor:pointer; font-weight:600; color:var(--ink-soft); list-style:none; display:flex; align-items:center; gap:6px;}
+  details.settings summary::-webkit-details-marker{ display:none; }
+  details.settings summary::before{ content:'⚙'; }
+  .settings-grid{ margin-top:14px; display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+  .settings-grid .full{ grid-column: 1 / -1; }
+  @media (max-width:560px){ .settings-grid{ grid-template-columns: 1fr; } }
+  .status-line{ font-size:12px; margin-top:10px; color: var(--ink-soft); }
+  .status-line.err{ color: var(--red); }
+  .status-line.ok{ color:#2E6B4F; }
+
+  .disclaimer{ font-size:11.5px; color: rgba(244,239,227,.55); text-align:center; max-width:560px; margin:26px auto 0; line-height:1.7; }
+</style>
+</head>
+<body>
+
+<header class="cover">
+  <div class="eyebrow">Personal Income Ledger</div>
+  <h1>สมุดบัญชีรายรับ</h1>
+  <p>บันทึกรายรับทุกรายการตลอดปี พร้อมประเมินภาษีเงินได้บุคคลธรรมดาแบบคร่าวๆ<br>ข้อมูลทั้งหมดเก็บลง Google Sheet ของคุณเอง ไม่ผ่านเซิร์ฟเวอร์อื่น</p>
+</header>
+
+<div class="wrap">
+
+  <!-- SETTINGS -->
+  <div class="page">
+    <details class="settings" id="settingsBlock">
+      <summary>ตั้งค่าการเชื่อมต่อ &amp; สมมติฐานภาษี</summary>
+      <div class="settings-grid">
+        <div class="full">
+          <label>Web App URL (จาก Google Apps Script)</label>
+          <input type="text" id="cfgUrl" placeholder="https://script.google.com/macros/s/xxxx/exec">
+        </div>
+        <div class="full">
+          <label>Token (ตั้งไว้ใน Script Properties)</label>
+          <input type="text" id="cfgToken" placeholder="รหัสลับของคุณ">
+        </div>
+        <div>
+          <label>ค่าลดหย่อนส่วนตัว (บาท/ปี)</label>
+          <input type="number" class="mono-in" id="cfgAllowance" value="60000">
+        </div>
+        <div>
+          <label>เพดานหักค่าใช้จ่าย 50% (บาท) — ใช้กับเงินได้ ม.40(1)(2)</label>
+          <input type="number" class="mono-in" id="cfgExpenseCap" value="100000">
+        </div>
+        <div class="full" style="border-top:1px dashed var(--paper-line); padding-top:10px; margin-top:2px;">
+          <label style="font-weight:600; color:var(--ink);">ค่าลดหย่อนอื่นๆ (กรอกยอดที่จ่ายจริงทั้งปี ระบบจะครอบเพดานให้อัตโนมัติ)</label>
+        </div>
+        <div>
+          <label>เบี้ยประกันสุขภาพตนเอง (บาท) — เพดาน 25,000</label>
+          <input type="number" class="mono-in" id="cfgHealthInsurance" value="0">
+        </div>
+        <div>
+          <label>ดอกเบี้ยเงินกู้ที่อยู่อาศัย (บาท) — เพดาน 100,000</label>
+          <input type="number" class="mono-in" id="cfgHomeInterest" value="0">
+        </div>
+        <div class="full">
+          <label>ลดหย่อนอื่นๆ รวม (บาท) — เช่น ประกันชีวิต, SSF/RMF, บริจาค, ประกันสังคม ฯลฯ ที่ยังไม่มีในลิสต์นี้</label>
+          <input type="number" class="mono-in" id="cfgOtherDeductions" value="0">
+        </div>
+        <div class="full">
+          <button class="ghost" id="btnSaveSettings" type="button">บันทึกการตั้งค่า</button>
+          <button class="ghost" id="btnTestConn" type="button">ทดสอบการเชื่อมต่อ</button>
+        </div>
+        <div class="full status-line" id="settingsStatus"></div>
+      </div>
+    </details>
+  </div>
+
+  <!-- SUMMARY / STAMP -->
+  <div class="page">
+    <div class="section-title"><span class="num">1</span><h2>ภาพรวมปีนี้</h2></div>
+    <div class="stamp-row">
+      <div class="stamp">
+        <div class="rate" id="stampRate">–</div>
+        <div class="lbl">อัตราภาษี<br>ขั้นสูงสุด</div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><div class="k">รายรับรวม</div><div class="v mono" id="statTotalIncome">฿0</div></div>
+        <div class="stat"><div class="k">ภาษีหัก ณ ที่จ่ายสะสม</div><div class="v mono" id="statWht">฿0</div></div>
+        <div class="stat"><div class="k">ภาษีที่ประเมินว่าต้องจ่าย</div><div class="v mono" id="statTaxDue">฿0</div></div>
+        <div class="stat"><div class="k">ผลลัพธ์โดยประมาณ</div><div class="v mono" id="statResult">–</div></div>
+      </div>
+    </div>
+    <div class="cat-breakdown" id="catBreakdown"></div>
+    <div class="cat-breakdown" id="deductionBreakdown" style="margin-top:16px; padding-top:14px; border-top:1px dashed var(--paper-line);"></div>
+  </div>
+
+  <!-- FORM -->
+  <div class="page">
+    <div class="section-title"><span class="num">2</span><h2>บันทึกรายรับใหม่</h2></div>
+    <form class="entry-form" id="entryForm">
+      <div class="f-date"><label>วันที่รับเงิน</label><input type="date" id="fDate" required></div>
+      <div class="f-cat">
+        <label>ประเภทเงินได้ (มาตรา 40)</label>
+        <select id="fCat" required>
+          <option value="40(1)">40(1) เงินเดือน ค่าจ้าง โบนัส</option>
+          <option value="40(2)">40(2) ค่านายหน้า ค่าธรรมเนียม เบี้ยประชุม</option>
+          <option value="40(3)">40(3) ค่าลิขสิทธิ์ กู๊ดวิลล์</option>
+          <option value="40(4)">40(4) ดอกเบี้ย เงินปันผล</option>
+          <option value="40(5)">40(5) ค่าเช่าทรัพย์สิน</option>
+          <option value="40(6)">40(6) วิชาชีพอิสระ (แพทย์ ทนาย วิศวกร ฯลฯ)</option>
+          <option value="40(7)">40(7) รับเหมาก่อสร้าง</option>
+          <option value="40(8)">40(8) ธุรกิจ พาณิชย์ อื่นๆ / ฟรีแลนซ์ทั่วไป</option>
+        </select>
+      </div>
+      <div class="f-desc"><label>รายละเอียด / แหล่งที่มา</label><input type="text" id="fDesc" placeholder="เช่น ค่าจ้างโปรเจกต์เว็บไซต์ บริษัท A" required></div>
+      <div class="f-amount"><label>จำนวนเงินที่ได้รับ (บาท)</label><input type="number" step="0.01" class="mono-in" id="fAmount" required></div>
+      <div class="f-wht"><label>ภาษีหัก ณ ที่จ่าย (ถ้ามี)</label><input type="number" step="0.01" class="mono-in" id="fWht" value="0"></div>
+      <div class="f-note"><label>บันทึกเพิ่มเติม</label><input type="text" id="fNote" placeholder="ไม่บังคับ"></div>
+      <div class="f-submit">
+        <button type="submit" class="gold">＋ บันทึกรายการ</button>
+      </div>
+    </form>
+    <div class="status-line" id="formStatus"></div>
+  </div>
+
+  <!-- LEDGER TABLE -->
+  <div class="page">
+    <div class="section-title"><span class="num">3</span><h2>รายการทั้งหมด</h2></div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>วันที่</th><th>ประเภท</th><th>รายละเอียด</th>
+            <th class="num">รายรับ</th><th class="num">หัก ณ ที่จ่าย</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="ledgerBody">
+          <tr><td colspan="6" class="empty-note">ยังไม่มีรายการ — ตั้งค่าการเชื่อมต่อด้านบน แล้วเริ่มบันทึกได้เลย</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <p class="disclaimer">
+    เครื่องมือนี้คำนวณภาษีแบบประมาณการเพื่อวางแผนเบื้องต้นเท่านั้น ไม่ใช่คำแนะนำทางภาษีอย่างเป็นทางการ
+    อัตราการหักค่าใช้จ่ายและค่าลดหย่อนอาจเปลี่ยนแปลงตามกฎหมายแต่ละปี ควรตรวจสอบกับกรมสรรพากร
+    หรือผู้เชี่ยวชาญด้านภาษีก่อนยื่นแบบจริง
+  </p>
+
+</div>
+
+<script>
+const LS_KEY = 'income_ledger_config_v1';
+let RECORDS = [];
+
+const CAT_LABELS = {
+  '40(1)': '40(1) เงินเดือน/ค่าจ้าง',
+  '40(2)': '40(2) ค่านายหน้า/ธรรมเนียม',
+  '40(3)': '40(3) ค่าลิขสิทธิ์',
+  '40(4)': '40(4) ดอกเบี้ย/ปันผล',
+  '40(5)': '40(5) ค่าเช่า',
+  '40(6)': '40(6) วิชาชีพอิสระ',
+  '40(7)': '40(7) รับเหมาก่อสร้าง',
+  '40(8)': '40(8) ธุรกิจ/ฟรีแลนซ์',
+};
+
+function loadConfig(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  }catch(e){ return {}; }
+}
+function saveConfig(cfg){
+  localStorage.setItem(LS_KEY, JSON.stringify(cfg));
+}
+
+function fmtBaht(n){
+  n = Number(n)||0;
+  return '฿' + n.toLocaleString('th-TH', {minimumFractionDigits:0, maximumFractionDigits:0});
+}
+
+/* ---------- progressive PIT brackets (Thailand, standard scale) ---------- */
+const BRACKETS = [
+  {upTo: 150000, rate: 0},
+  {upTo: 300000, rate: 0.05},
+  {upTo: 500000, rate: 0.10},
+  {upTo: 750000, rate: 0.15},
+  {upTo: 1000000, rate: 0.20},
+  {upTo: 2000000, rate: 0.25},
+  {upTo: 5000000, rate: 0.30},
+  {upTo: Infinity, rate: 0.35},
+];
+
+function calcProgressiveTax(taxableIncome){
+  let remaining = taxableIncome;
+  let prevCap = 0;
+  let tax = 0;
+  let topRate = 0;
+  for (const b of BRACKETS){
+    if (remaining <= 0) break;
+    const bandSize = b.upTo - prevCap;
+    const taxedInBand = Math.min(remaining, bandSize);
+    if (taxedInBand > 0 && b.rate > 0) topRate = b.rate;
+    tax += taxedInBand * b.rate;
+    remaining -= taxedInBand;
+    prevCap = b.upTo;
+  }
+  return { tax, topRate };
+}
+
+/* ---------- settings UI ---------- */
+function initSettingsUI(){
+  const cfg = loadConfig();
+  document.getElementById('cfgUrl').value = cfg.url || '';
+  document.getElementById('cfgToken').value = cfg.token || '';
+  document.getElementById('cfgAllowance').value = cfg.allowance ?? 60000;
+  document.getElementById('cfgExpenseCap').value = cfg.expenseCap ?? 100000;
+  document.getElementById('cfgHealthInsurance').value = cfg.healthInsurance ?? 0;
+  document.getElementById('cfgHomeInterest').value = cfg.homeInterest ?? 0;
+  document.getElementById('cfgOtherDeductions').value = cfg.otherDeductions ?? 0;
+  if (!cfg.url) document.getElementById('settingsBlock').open = true;
+
+  document.getElementById('btnSaveSettings').addEventListener('click', () => {
+    const newCfg = {
+      url: document.getElementById('cfgUrl').value.trim(),
+      token: document.getElementById('cfgToken').value.trim(),
+      allowance: Number(document.getElementById('cfgAllowance').value) || 0,
+      expenseCap: Number(document.getElementById('cfgExpenseCap').value) || 0,
+      healthInsurance: Number(document.getElementById('cfgHealthInsurance').value) || 0,
+      homeInterest: Number(document.getElementById('cfgHomeInterest').value) || 0,
+      otherDeductions: Number(document.getElementById('cfgOtherDeductions').value) || 0,
+    };
+    saveConfig(newCfg);
+    setStatus('settingsStatus', 'บันทึกการตั้งค่าแล้ว', 'ok');
+    refresh();
+  });
+
+  document.getElementById('btnTestConn').addEventListener('click', async () => {
+    const cfg = loadConfig();
+    if (!cfg.url){ setStatus('settingsStatus', 'กรุณาใส่ Web App URL ก่อน', 'err'); return; }
+    setStatus('settingsStatus', 'กำลังทดสอบ...', '');
+    try{
+      const res = await fetch(cfg.url + '?action=ping');
+      const data = await res.json();
+      setStatus('settingsStatus', data.ok ? 'เชื่อมต่อสำเร็จ ✓' : 'เชื่อมต่อได้ แต่ตอบกลับผิดปกติ', data.ok ? 'ok' : 'err');
+    }catch(e){
+      setStatus('settingsStatus', 'เชื่อมต่อไม่สำเร็จ: ' + e.message, 'err');
+    }
+  });
+}
+
+function setStatus(id, msg, kind){
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = 'status-line' + (kind ? ' ' + kind : '');
+}
+
+/* ---------- API calls ---------- */
+async function apiList(){
+  const cfg = loadConfig();
+  if (!cfg.url || !cfg.token) return [];
+  const res = await fetch(cfg.url + '?action=list&token=' + encodeURIComponent(cfg.token));
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'load_failed');
+  return data.records;
+}
+
+async function apiAdd(record){
+  const cfg = loadConfig();
+  const res = await fetch(cfg.url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids CORS preflight on Apps Script
+    body: JSON.stringify({ action: 'add', token: cfg.token, record })
+  });
+  return res.json();
+}
+
+async function apiDelete(id){
+  const cfg = loadConfig();
+  const res = await fetch(cfg.url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'delete', token: cfg.token, id })
+  });
+  return res.json();
+}
+
+/* ---------- rendering ---------- */
+function renderLedger(){
+  const body = document.getElementById('ledgerBody');
+  if (!RECORDS.length){
+    body.innerHTML = '<tr><td colspan="6" class="empty-note">ยังไม่มีรายการ</td></tr>';
+    return;
+  }
+  const sorted = [...RECORDS].sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  body.innerHTML = sorted.map(r => `
+    <tr>
+      <td class="mono">${r.date || ''}</td>
+      <td><span class="cat-pill">${r.category}</span></td>
+      <td>${escapeHtml(r.description)}${r.note ? '<div style="color:var(--ink-soft);font-size:11.5px;margin-top:2px;">'+escapeHtml(r.note)+'</div>' : ''}</td>
+      <td class="num">${fmtBaht(r.amount)}</td>
+      <td class="num">${fmtBaht(r.withholdingTax)}</td>
+      <td><button class="danger" data-id="${r.id}">ลบ</button></td>
+    </tr>
+  `).join('');
+
+  body.querySelectorAll('button[data-id]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('ลบรายการนี้?')) return;
+      btn.disabled = true;
+      try{
+        await apiDelete(btn.dataset.id);
+        await refresh();
+      }catch(e){ alert('ลบไม่สำเร็จ: ' + e.message); btn.disabled = false; }
+    });
+  });
+}
+
+function renderSummary(){
+  const cfg = loadConfig();
+  const totalIncome = RECORDS.reduce((s,r) => s + (Number(r.amount)||0), 0);
+  const totalWht = RECORDS.reduce((s,r) => s + (Number(r.withholdingTax)||0), 0);
+
+  // simplified expense deduction: 50% up to cap for 40(1)/40(2), 0% for others (varies by law/category)
+  let expenseDeduction = 0;
+  RECORDS.forEach(r => {
+    if (r.category === '40(1)' || r.category === '40(2)'){
+      expenseDeduction += Math.min(Number(r.amount)||0, cfg.expenseCap ?? 100000) * 0.5;
+    }
+  });
+  const allowance = cfg.allowance ?? 60000;
+  const healthInsuranceDeduction = Math.min(Number(cfg.healthInsurance) || 0, 25000);
+  const homeInterestDeduction = Math.min(Number(cfg.homeInterest) || 0, 100000);
+  const otherDeductions = Number(cfg.otherDeductions) || 0;
+  const totalOtherDeductions = healthInsuranceDeduction + homeInterestDeduction + otherDeductions;
+  const taxable = Math.max(0, totalIncome - expenseDeduction - allowance - totalOtherDeductions);
+  const { tax, topRate } = calcProgressiveTax(taxable);
+  const result = tax - totalWht;
+
+  document.getElementById('statTotalIncome').textContent = fmtBaht(totalIncome);
+  document.getElementById('statWht').textContent = fmtBaht(totalWht);
+  document.getElementById('statTaxDue').textContent = fmtBaht(tax);
+  document.getElementById('stampRate').textContent = (topRate*100).toFixed(0) + '%';
+
+  const resultEl = document.getElementById('statResult');
+  if (RECORDS.length === 0){
+    resultEl.textContent = '–';
+    resultEl.className = 'v mono';
+  } else if (result > 0){
+    resultEl.textContent = 'จ่ายเพิ่ม ' + fmtBaht(result);
+    resultEl.className = 'v mono neg';
+  } else {
+    resultEl.textContent = 'ขอคืน ' + fmtBaht(Math.abs(result));
+    resultEl.className = 'v mono pos';
+  }
+
+  // breakdown by category
+  const byCat = {};
+  RECORDS.forEach(r => { byCat[r.category] = (byCat[r.category]||0) + (Number(r.amount)||0); });
+  const max = Math.max(1, ...Object.values(byCat));
+  const el = document.getElementById('catBreakdown');
+  const entries = Object.entries(byCat).sort((a,b) => b[1]-a[1]);
+  el.innerHTML = entries.length ? entries.map(([cat, amt]) => `
+    <div class="cat-row">
+      <div style="width:170px; color:var(--ink-soft);">${CAT_LABELS[cat] || cat}</div>
+      <div class="bar-bg"><div class="bar" style="width:${(amt/max*100).toFixed(1)}%"></div></div>
+      <div class="amt mono">${fmtBaht(amt)}</div>
+    </div>
+  `).join('') : '';
+
+  // deduction summary
+  const dEl = document.getElementById('deductionBreakdown');
+  const capNote = (raw, cap) => Number(raw) > cap ? ` <span style="color:var(--red);">(ครอบเพดาน ${fmtBaht(cap)})</span>` : '';
+  const deductionRows = [
+    ['ค่าใช้จ่าย 50% (ม.40(1)(2))', expenseDeduction, null],
+    ['ลดหย่อนส่วนตัว', allowance, null],
+    ['เบี้ยประกันสุขภาพ', healthInsuranceDeduction, capNote(cfg.healthInsurance, 25000)],
+    ['ดอกเบี้ยเงินกู้ที่อยู่อาศัย', homeInterestDeduction, capNote(cfg.homeInterest, 100000)],
+    ['ลดหย่อนอื่นๆ', otherDeductions, null],
+  ].filter(row => row[1] > 0);
+  dEl.innerHTML = deductionRows.length ? `
+    <div style="font-size:11px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px;">รายการลดหย่อนที่ใช้คำนวณ</div>
+    ${deductionRows.map(([label, amt, note]) => `
+      <div class="cat-row">
+        <div style="width:220px; color:var(--ink-soft);">${label}${note || ''}</div>
+        <div class="bar-bg"><div class="bar" style="background:var(--mint); width:${Math.min(100, amt/(allowance+expenseDeduction+25000+100000+otherDeductions||1)*100).toFixed(1)}%"></div></div>
+        <div class="amt mono">${fmtBaht(amt)}</div>
+      </div>
+    `).join('')}
+    <div class="cat-row" style="font-weight:600;">
+      <div style="width:220px;">รวมลดหย่อนทั้งหมด</div>
+      <div class="bar-bg"></div>
+      <div class="amt mono">${fmtBaht(expenseDeduction + allowance + totalOtherDeductions)}</div>
+    </div>
+  ` : '';
+}
+
+function escapeHtml(s){
+  return (s||'').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+async function refresh(){
+  const cfg = loadConfig();
+  if (!cfg.url || !cfg.token){ renderLedger(); renderSummary(); return; }
+  try{
+    RECORDS = await apiList();
+    renderLedger();
+    renderSummary();
+  }catch(e){
+    setStatus('formStatus', 'โหลดข้อมูลไม่สำเร็จ: ' + e.message, 'err');
+  }
+}
+
+/* ---------- form ---------- */
+document.getElementById('entryForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const cfg = loadConfig();
+  if (!cfg.url || !cfg.token){
+    setStatus('formStatus', 'กรุณาตั้งค่า Web App URL และ Token ก่อนบันทึกรายการ', 'err');
+    document.getElementById('settingsBlock').open = true;
+    return;
+  }
+  const catVal = document.getElementById('fCat').value;
+  const record = {
+    date: document.getElementById('fDate').value,
+    category: catVal,
+    categoryLabel: CAT_LABELS[catVal] || catVal,
+    description: document.getElementById('fDesc').value,
+    amount: Number(document.getElementById('fAmount').value) || 0,
+    withholdingTax: Number(document.getElementById('fWht').value) || 0,
+    note: document.getElementById('fNote').value,
+  };
+  const btn = e.target.querySelector('button[type=submit]');
+  btn.disabled = true;
+  setStatus('formStatus', 'กำลังบันทึก...', '');
+  try{
+    const res = await apiAdd(record);
+    if (!res.ok) throw new Error(res.error || 'save_failed');
+    e.target.reset();
+    document.getElementById('fWht').value = 0;
+    setStatus('formStatus', 'บันทึกรายการแล้ว ✓', 'ok');
+    await refresh();
+  }catch(err){
+    setStatus('formStatus', 'บันทึกไม่สำเร็จ: ' + err.message, 'err');
+  }finally{
+    btn.disabled = false;
+  }
+});
+
+/* ---------- init ---------- */
+initSettingsUI();
+refresh();
+</script>
+</body>
+</html>
