@@ -121,20 +121,37 @@
   button.ghost{ background:transparent; color:var(--ink-soft); border:1px solid var(--paper-line); padding:6px 12px; font-size:12px; }
   button.danger{ background:transparent; color:var(--red); border:1px solid var(--red); padding:5px 10px; font-size:11.5px; }
 
-  /* ledger table */
-  table{ width:100%; border-collapse:collapse; font-size:13.5px; }
-  thead th{
-    text-align:left; font-size:11px; letter-spacing:.05em; text-transform:uppercase;
-    color:var(--ink-soft); border-bottom:1.5px solid var(--ink); padding:0 8px 8px;
-  }
-  tbody td{ padding:10px 8px; border-bottom:1px dashed var(--paper-line); vertical-align:top; }
-  tbody tr:last-child td{ border-bottom:none; }
-  td.num, th.num{ text-align:right; font-family:'IBM Plex Mono', monospace; }
+  /* ledger records — receipt-style list, not a rigid table */
+  .ledger-list{ display:flex; flex-direction:column; }
+  .ledger-item{ padding:16px 2px; border-bottom:1px dashed var(--paper-line); }
+  .ledger-item:last-child{ border-bottom:none; }
+
+  .li-top{ display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-start; gap:10px 16px; }
+  .li-when{ display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+  .li-date{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; color:var(--ink-soft); }
+
+  .li-right{ display:flex; align-items:flex-start; gap:12px; margin-left:auto; }
+  .li-amt{ text-align:right; }
+  .li-amt .amt{ font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:16px; color:var(--ink); }
+  .li-amt .wht{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft); margin-top:3px; }
+
+  .li-body{ margin-top:11px; }
+  .li-payer{ font-weight:600; font-size:14px; color:var(--ink); }
+  .li-payer .taxid{ font-weight:400; font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--ink-soft); margin-left:8px; }
+  .li-desc{ font-size:13px; color:var(--ink-soft); margin-top:4px; line-height:1.55; }
+  .li-note{ font-size:11.5px; color:var(--gold-deep); margin-top:5px; }
+  .li-note::before{ content:'✎ '; }
+
   .cat-pill{
     display:inline-block; font-size:11px; padding:2px 8px; border-radius:20px;
     background: rgba(16,24,32,.08); color:var(--ink-soft); font-family:'IBM Plex Mono', monospace;
   }
+  button.danger.li-del{ padding:4px 10px; font-size:11px; flex-shrink:0; }
   .empty-note{ text-align:center; padding: 30px 10px; color:var(--ink-soft); font-size:13.5px; }
+
+  @media (max-width:520px){
+    .li-right{ width:100%; justify-content:space-between; margin-left:0; }
+  }
 
   /* stamp / summary */
   .stamp-row{ display:flex; gap:20px; flex-wrap:wrap; align-items:center; }
@@ -285,21 +302,11 @@
     <div class="status-line" id="formStatus"></div>
   </div>
 
-  <!-- LEDGER TABLE -->
+  <!-- LEDGER LIST -->
   <div class="page">
     <div class="section-title"><span class="num">3</span><h2>รายการทั้งหมด</h2></div>
-    <div style="overflow-x:auto;">
-      <table>
-        <thead>
-          <tr>
-            <th>วันที่</th><th>ประเภท</th><th>ผู้จ่ายเงิน</th><th>รายละเอียด</th>
-            <th class="num">รายรับ</th><th class="num">หัก ณ ที่จ่าย</th><th></th>
-          </tr>
-        </thead>
-        <tbody id="ledgerBody">
-          <tr><td colspan="7" class="empty-note">ยังไม่มีรายการ — ตั้งค่าการเชื่อมต่อด้านบน แล้วเริ่มบันทึกได้เลย</td></tr>
-        </tbody>
-      </table>
+    <div class="ledger-list" id="ledgerBody">
+      <div class="empty-note">ยังไม่มีรายการ — ตั้งค่าการเชื่อมต่อด้านบน แล้วเริ่มบันทึกได้เลย</div>
     </div>
   </div>
 
@@ -451,21 +458,37 @@ async function apiDelete(id){
 function renderLedger(){
   const body = document.getElementById('ledgerBody');
   if (!RECORDS.length){
-    body.innerHTML = '<tr><td colspan="7" class="empty-note">ยังไม่มีรายการ</td></tr>';
+    body.innerHTML = '<div class="empty-note">ยังไม่มีรายการ</div>';
     return;
   }
   const sorted = [...RECORDS].sort((a,b) => (b.date||'').localeCompare(a.date||''));
-  body.innerHTML = sorted.map(r => `
-    <tr>
-      <td class="mono">${r.date || ''}</td>
-      <td><span class="cat-pill">${r.category}</span></td>
-      <td>${escapeHtml(r.payerName)}${r.payerTaxId ? '<div class="mono" style="color:var(--ink-soft);font-size:11px;margin-top:2px;">เลขผู้เสียภาษี '+escapeHtml(r.payerTaxId)+'</div>' : ''}</td>
-      <td>${escapeHtml(r.description)}${r.note ? '<div style="color:var(--ink-soft);font-size:11.5px;margin-top:2px;">'+escapeHtml(r.note)+'</div>' : ''}</td>
-      <td class="num">${fmtBaht(r.amount)}</td>
-      <td class="num">${fmtBaht(r.withholdingTax)}</td>
-      <td><button class="danger" data-id="${r.id}">ลบ</button></td>
-    </tr>
-  `).join('');
+  body.innerHTML = sorted.map(r => {
+    const payer = r.payerName ? escapeHtml(r.payerName) : '<span style="color:var(--ink-soft);">ไม่ระบุผู้จ่ายเงิน</span>';
+    const taxid = r.payerTaxId ? `<span class="taxid">เลขผู้เสียภาษี ${escapeHtml(r.payerTaxId)}</span>` : '';
+    const wht = Number(r.withholdingTax) > 0 ? `<div class="wht">หัก ณ ที่จ่าย ${fmtBaht(r.withholdingTax)}</div>` : '';
+    const note = r.note ? `<div class="li-note">${escapeHtml(r.note)}</div>` : '';
+    return `
+    <div class="ledger-item">
+      <div class="li-top">
+        <div class="li-when">
+          <span class="li-date">${r.date || ''}</span>
+          <span class="cat-pill">${escapeHtml(r.category || '')}</span>
+        </div>
+        <div class="li-right">
+          <div class="li-amt">
+            <div class="amt">${fmtBaht(r.amount)}</div>
+            ${wht}
+          </div>
+          <button class="danger li-del" data-id="${r.id}">ลบ</button>
+        </div>
+      </div>
+      <div class="li-body">
+        <div class="li-payer">${payer}${taxid}</div>
+        <div class="li-desc">${escapeHtml(r.description)}</div>
+        ${note}
+      </div>
+    </div>`;
+  }).join('');
 
   body.querySelectorAll('button[data-id]').forEach(btn => {
     btn.addEventListener('click', async () => {
